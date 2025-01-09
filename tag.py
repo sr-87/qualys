@@ -3,8 +3,36 @@ import base64
 import xml.etree.ElementTree as ET
 from getpass import getpass
 
-# Define the authentication URL
-auth_url = "https://qualysapi.qg1.apps.qualys.co.uk/api/2.0/fo/session/"
+# Ask for the platform selection
+print("Options: US1, US2, US3, US4, UK, EU1, EU2, EU3, IN, CA, AE, AU, KSA")
+platform = input("What platform is your account on? ").upper()
+
+# Define base URLs for each platform
+base_urls = {
+    "US1": "https://qualysapi.qualys.com",
+    "US2": "https://qualysapi.qg2.apps.qualys.com",
+    "US3": "https://qualysapi.qg3.apps.qualys.com",
+    "US4": "https://qualysapi.qg4.apps.qualys.com",
+    "UK": "https://qualysapi.qg1.apps.qualys.co.uk",
+    "EU1": "https://qualysapi.qualys.eu",
+    "EU2": "https://qualysapi.qg2.apps.qualys.eu",
+    "EU3": "https://qualysapi.qg3.apps.qualys.it",
+    "IN": "https://qualysapi.qg1.apps.qualys.in",
+    "CA": "https://qualysapi.qg1.apps.qualys.ca",
+    "AE": "https://qualysapi.qg1.apps.qualys.ae",
+    "AU": "https://qualysapi.qg1.apps.qualys.com.au",
+    "KSA": "https://qualysapi.qg1.apps.qualysksa.com"
+}
+
+# Select the correct base URL
+if platform in base_urls:
+    base_url = base_urls[platform]
+else:
+    print("Invalid platform selection. Exiting")
+    exit(1)  # Explicitly exit if platform detail is incorrect
+
+# Define the authentication URL using the base URL
+auth_url = f"{base_url}/api/2.0/fo/session/"
 
 # Input for username and password at runtime
 username = input("Enter your username: ")
@@ -28,8 +56,8 @@ if auth_response.status_code != 200:
     print(auth_response.text)
     exit(1)  # Explicitly exit the script if authentication fails
 
-# Define the tag URL
-tag_url = "https://qualysapi.qg1.apps.qualys.co.uk/qps/rest/2.0/create/am/tag"
+# Define the tag URL using the base URL
+tag_url = f"{base_url}/qps/rest/2.0/create/am/tag"
 
 # Define the XML payload for creating the "OS: Operating Systems" parent tag
 xml_payload_for_parent_OS = """
