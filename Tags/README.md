@@ -1,6 +1,24 @@
 # Qualys API Script for Tag Creation
 This script automates the creation of asset tags in Qualys using the API. It's designed to be flexible, allowing users to select their Qualys platform, and then uses that selection to dynamically adjust API endpoints for authentication and tag creation.
 
+## Description:
+This script creates the following tag structure:
+
+**OS: Operating Systems**
+  - OS: Windows Server
+  - OS: Windows Client
+  - OS: Linux Server
+  - OS: Linux Client
+  - OS: Network OS
+
+**Type: Asset Types**
+  - Type: Servers
+  - Type: Database Servers
+  - Type: Domain Controllers
+  - Type: Clients/Workstations
+  - Type: Network Devices
+  - Type: Printers
+
 ## Features
 - **Platform Selection:** Choose from all public Qualys platforms (US1, US2, US3, US4, UK, EU1, EU2, EU3, IN, CA, AE, AU, KSA) to set the correct base URL for API calls.
 - **User Authentication:** Securely prompts for username and password using Python's ```getpass``` module to avoid echoing passwords in the console.
@@ -28,4 +46,4 @@ This script automates the creation of asset tags in Qualys using the API. It's d
 Use at your own risk. This script interacts with the Qualys API which may have usage limits or require specific permissions. Always test in a non-production environment first. 
 
 ## Feedback
-I'm open to feedback for updating this script with other commonly used tags. If you have suggestions or improvements, please feel free to open an issue or submit a pull request on GitHub.
+Suggestions to update the script with other commonly used tags are welcome. If you have suggestions or improvements, please feel free to open an issue or submit a pull request on GitHub.
