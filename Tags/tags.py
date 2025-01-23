@@ -29,7 +29,7 @@ if platform in base_urls:
     base_url = base_urls[platform]
 else:
     print("Invalid platform selection. Exiting")
-    exit(1)  # Explicitly exit if platform detail is incorrect
+    exit(1)  # Exit if platform detail is incorrect
 
 # Define the authentication URL using the base URL
 auth_url = f"{base_url}/api/2.0/fo/session/"
@@ -54,7 +54,19 @@ auth_response = requests.post(auth_url, headers=auth_headers, data=auth_data)
 if auth_response.status_code != 200:
     print("Authentication failed.")
     print(auth_response.text)
-    exit(1)  # Explicitly exit the script if authentication fails
+    exit(1)  # Exit the script if authentication fails
+
+# Logout operation
+logout_headers = {
+    "X-Requested-With": "Curl Sample",
+}
+logout_data = {
+    "action": "logout"
+}
+logout_url = f"{base_url}/api/2.0/fo/session/"
+
+# Perform logout using the session cookies from the authentication request
+logout_response = requests.post(logout_url, headers=logout_headers, data=logout_data, cookies=auth_response.cookies)
 
 # Define the tag URL using the base URL
 tag_url = f"{base_url}/qps/rest/2.0/create/am/tag"
