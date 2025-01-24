@@ -8,7 +8,7 @@ It's designed to be flexible, allowing users to select their Qualys platform bef
 
 The script creates the following:
 
-### Tags:
+### 1. Tags:
 #### OS: Operating Systems
 - OS: Windows Server
 - OS: Windows Client
@@ -24,11 +24,11 @@ The script creates the following:
 - Type: Network Devices
 - Type: Printers
 
-### Cloud Agent Activation Key:
+### 2. Cloud Agent Activation Key:
 - **Title**: Default Key
 - **Activated modules**: VM, PM, SCA, GAV/CSAM
 
-### Cloud Agent Configuration Profile:
+### 3. Cloud Agent Configuration Profile:
 - **Order**: 1
 - **Title**: Default
 - **Make this the default profile for the subscription**: yes
@@ -46,7 +46,7 @@ The script creates the following:
 
 Other settings remain at the default
 
-### Inventory Search List:
+### 4. Inventory Search List:
 - **Title**:Inventory QIDs
 - **QIDs**:
   - 6 - DNS Host Name
@@ -110,7 +110,7 @@ Other settings remain at the default
   - 105327 - Antivirus Product Detected on Windows Host
   - 115263 - Unix Authentication Timeout Occurred
 
-### Option Profile for Discovery scans:
+### 5. Option Profile for Discovery scans:
 - **Title**:Discovery Profile
 - **Vulnerability Detection**: Custom
 - **Include the QIDs from the selected lists** Inventory QIDs
