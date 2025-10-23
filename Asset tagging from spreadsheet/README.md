@@ -94,7 +94,7 @@ pip install requests pandas openpyxl
 1. Navigate to the directory containing the script and the input file.
 2. Run the script:
 ```bash
-python3 "Asset tagging from spreadsheet.py"
+python3 "tag_from_spreadsheet.py"
 ```
 
 3. Follow the prompts:
