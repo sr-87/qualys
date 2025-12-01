@@ -63,7 +63,7 @@ The script will authenticate, fetch assets, detect duplicates, and generate repo
 - Frozen headers
 - Color-coded duplicate groups (alternating blue/peach)
 - Columns: Asset ID, Address, DNS Name, Asset Name, Source
-- **[Download Sample Excel Report](sample_duplicate_assets_20251201_134638.xlsx?raw=true)**
+- **Sample:** [sample_duplicate_assets_20251201_134638.xlsx](sample_duplicate_assets_20251201_134638.xlsx) *(Click link, then click "Download" button)*
 
 ### **HTML Report** (`duplicate_assets_YYYYMMDD_HHMMSS.html`)
 - Summary dashboard with metrics
@@ -71,7 +71,7 @@ The script will authenticate, fetch assets, detect duplicates, and generate repo
 - Sortable and resizable columns
 - Reset sort button
 - Print-friendly layout
-- **[Download Sample HTML Report](sample_duplicate_assets_20250101_120000.html?raw=true)**
+- **Sample:** [sample_duplicate_assets_20250101_120000.html](sample_duplicate_assets_20250101_120000.html) *(Click link, then click "Download" or view in browser)*
 
 ---
 
