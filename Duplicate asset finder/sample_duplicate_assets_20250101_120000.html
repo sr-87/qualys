@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duplicate Assets Report - 01-01-2025 12:00:00</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #224F91 0%, #1a3d73 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #34495E 0%, #2C3E50 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .metadata {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .summary-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #224F91;
+            margin-bottom: 5px;
+        }
+
+        .summary-card .label {
+            font-size: 14px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #224F91;
+        }
+
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: #34495E;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        th .resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            cursor: col-resize;
+            user-select: none;
+            height: 100%;
+        }
+
+        th .resizer:hover {
+            background-color: #224F91;
+        }
+
+        th:hover {
+            background: #2C3E50;
+        }
+
+        th::after {
+            content: " ⇅";
+            opacity: 0.5;
+            font-size: 10px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        tr.group-0 {
+            background-color: #AED6F1;
+        }
+
+        tr.group-1 {
+            background-color: #FAD7A0;
+        }
+
+        tr:hover {
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-size: 16px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #6c757d;
+            font-size: 13px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #224F91;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #1a3d73;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .controls, .btn {
+                display: none;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Duplicate Assets Report</h1>
+            <div class="metadata">
+                User: demo_user@example.com | Generated: 01-01-2025 12:00:00
+            </div>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card">
+                <div class="number">152</div>
+                <div class="label">Host Assets</div>
+            </div>
+            <div class="summary-card">
+                <div class="number">16</div>
+                <div class="label">Potential Duplicates</div>
+            </div>
+            <div class="summary-card">
+                <div class="number">10.5%</div>
+                <div class="label">Duplicate Ratio</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by Asset ID, Address, DNS Name, Asset Name, or Source...">
+            </div>
+            <button class="btn" id="resetSortBtn">Reset Sort</button>
+            <button class="btn" onclick="window.print()">Print Report</button>
+        </div>
+
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th data-column="0">Asset ID<div class="resizer"></div></th>
+                        <th data-column="1">Address<div class="resizer"></div></th>
+                        <th data-column="2">DNS Name<div class="resizer"></div></th>
+                        <th data-column="3">Asset Name<div class="resizer"></div></th>
+                        <th data-column="4">Source<div class="resizer"></div></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="group-0" data-original-index="0">
+                        <td>12345678</td>
+                        <td>192.168.1.10</td>
+                        <td>server01.example.com</td>
+                        <td>Production-WebServer</td>
+                        <td>EC2</td>
+                    </tr>
+                    <tr class="group-0" data-original-index="1">
+                        <td>12345789</td>
+                        <td>192.168.1.11</td>
+                        <td>server02.example.com</td>
+                        <td>Production-WebServer</td>
+                        <td>Agent</td>
+                    </tr>
+                    <tr class="group-1" data-original-index="2">
+                        <td>23456789</td>
+                        <td>10.0.1.50</td>
+                        <td>db-primary.corp.local</td>
+                        <td>Database-Server-01</td>
+                        <td>Agent</td>
+                    </tr>
+                    <tr class="group-1" data-original-index="3">
+                        <td>23456890</td>
+                        <td>10.0.1.51</td>
+                        <td>db-primary.corp.local</td>
+                        <td>Database-Server-02</td>
+                        <td>EC2</td>
+                    </tr>
+                    <tr class="group-0" data-original-index="4">
+                        <td>34567890</td>
+                        <td>172.16.2.100</td>
+                        <td>app01.internal</td>
+                        <td>Application-Server</td>
+                        <td>Agent</td>
+                    </tr>
+                    <tr class="group-0" data-original-index="5">
+                        <td>34567901</td>
+                        <td>172.16.2.101</td>
+                        <td>app02.internal</td>
+                        <td>App-Server-Backup</td>
+                        <td>Agent</td>
+                    </tr>
+                    <tr class="group-1" data-original-index="6">
+                        <td>45678901</td>
+                        <td>10.20.30.40</td>
+                        <td>fileserver.domain.com</td>
+                        <td>FileServer-Main</td>
+                        <td>Agent</td>
+                    </tr>
+                    <tr class="group-1" data-original-index="7">
+                        <td>45678912</td>
+                        <td>10.20.30.41</td>
+                        <td>fileserver-backup.domain.com</td>
+                        <td>FileServer-Main</td>
+                        <td>EC2</td>
+                    </tr>
+                    <tr class="group-0" data-original-index="8">
+                        <td>56789012</td>
+                        <td>192.168.100.50</td>
+                        <td>web-prod-01.example.com</td>
+                        <td>WebServer-Production</td>
+                        <td>EC2</td>
+                    </tr>
+                    <tr class="group-0" data-original-index="9">
+                        <td>56789123</td>
+                        <td>192.168.100.50</td>
+                        <td>web-prod-02.example.com</td>
+                        <td>WebServer-Prod-Backup</td>
+                        <td>Agent</td>
+                    </tr>
+                    <tr class="group-1" data-original-index="10">
+                        <td>67890123</td>
+                        <td>10.50.60.70</td>
+                        <td>mail01.corp.local</td>
+                        <td>Mail-Server</td>
+                        <td>Agent</td>
+                    </tr>
+                    <tr class="group-1" data-original-index="11">
+                        <td>67890234</td>
+                        <td>10.50.60.71</td>
+                        <td>mail02.corp.local</td>
+                        <td>Mail-Server</td>
+                        <td>EC2</td>
+                    </tr>
+                    <tr class="group-0" data-original-index="12">
+                        <td>78901234</td>
+                        <td>172.20.10.100</td>
+                        <td>proxy.internal.net</td>
+                        <td>Proxy-Gateway-01</td>
+                        <td>Agent</td>
+                    </tr>
+                    <tr class="group-0" data-original-index="13">
+                        <td>78901345</td>
+                        <td>172.20.10.101</td>
+                        <td>proxy.internal.net</td>
+                        <td>Proxy-Gateway-02</td>
+                        <td>Agent</td>
+                    </tr>
+                    <tr class="group-1" data-original-index="14">
+                        <td>89012345</td>
+                        <td>192.168.50.10</td>
+                        <td>backup01.example.com</td>
+                        <td>Backup-Server</td>
+                        <td>EC2</td>
+                    </tr>
+                    <tr class="group-1" data-original-index="15">
+                        <td>89012456</td>
+                        <td>192.168.50.11</td>
+                        <td>backup02.example.com</td>
+                        <td>Backup-Server</td>
+                        <td>Agent</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="no-results" id="noResults" style="display: none;">
+                No matching records found
+            </div>
+        </div>
+
+        <div class="footer">
+            Report contains potential duplicate assets based on Asset Name, DNS Name, NetBIOS Name, MAC Address, and IPv4 Address
+        </div>
+    </div>
+
+    <script>
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const table = document.getElementById('dataTable');
+        const tbody = table.querySelector('tbody');
+        const noResults = document.getElementById('noResults');
+        const resetSortBtn = document.getElementById('resetSortBtn');
+
+        // Store original row order on page load
+        const originalRowOrder = Array.from(tbody.querySelectorAll('tr'));
+
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = tbody.getElementsByTagName('tr');
+            let visibleCount = 0;
+
+            for (let row of rows) {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+
+            if (visibleCount === 0) {
+                table.style.display = 'none';
+                noResults.style.display = 'block';
+            } else {
+                table.style.display = 'table';
+                noResults.style.display = 'none';
+            }
+        });
+
+        // Sort functionality
+        let sortDirections = [true, true, true, true, true];
+
+        function sortTable(columnIndex) {
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const direction = sortDirections[columnIndex];
+
+            rows.sort((a, b) => {
+                const aValue = a.cells[columnIndex].textContent.trim();
+                const bValue = b.cells[columnIndex].textContent.trim();
+
+                // Try to parse as numbers
+                const aNum = parseFloat(aValue);
+                const bNum = parseFloat(bValue);
+
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return direction ? aNum - bNum : bNum - aNum;
+                }
+
+                return direction ?
+                    aValue.localeCompare(bValue) :
+                    bValue.localeCompare(aValue);
+            });
+
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+
+            // Toggle direction
+            sortDirections[columnIndex] = !direction;
+        }
+
+        // Column resizing functionality (must be set up BEFORE click handlers)
+        const resizers = document.querySelectorAll('.resizer');
+        let currentResizer = null;
+        let currentTh = null;
+        let startX = 0;
+        let startWidth = 0;
+        let isResizing = false;
+        let hasMoved = false;
+
+        resizers.forEach(resizer => {
+            resizer.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                isResizing = true;
+                hasMoved = false;
+                currentResizer = resizer;
+                currentTh = resizer.parentElement;
+                startX = e.pageX;
+                startWidth = currentTh.offsetWidth;
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            });
+        });
+
+        // Add click handlers to table headers for sorting
+        const headers = document.querySelectorAll('th[data-column]');
+        headers.forEach(th => {
+            th.addEventListener('click', function(e) {
+                // Don't sort if we just finished resizing
+                if (hasMoved) {
+                    hasMoved = false;
+                    return;
+                }
+                // Only sort if we didn't click on the resizer
+                if (!e.target.classList.contains('resizer')) {
+                    const columnIndex = parseInt(this.getAttribute('data-column'));
+                    sortTable(columnIndex);
+                }
+            });
+        });
+
+        function handleMouseMove(e) {
+            if (currentResizer) {
+                hasMoved = true;
+                const width = startWidth + (e.pageX - startX);
+                if (width > 50) { // Minimum width
+                    currentTh.style.width = width + 'px';
+                    currentTh.style.minWidth = width + 'px';
+                }
+            }
+        }
+
+        function handleMouseUp() {
+            currentResizer = null;
+            currentTh = null;
+            isResizing = false;
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+
+            // Reset hasMoved after a short delay to allow click handler to check it
+            setTimeout(() => {
+                hasMoved = false;
+            }, 10);
+        }
+
+        // Reset sort functionality
+        resetSortBtn.addEventListener('click', function() {
+            // Restore original row order
+            originalRowOrder.forEach(row => tbody.appendChild(row));
+
+            // Reset sort directions to initial state
+            sortDirections = [true, true, true, true, true];
+        });
+    </script>
+</body>
+</html>
