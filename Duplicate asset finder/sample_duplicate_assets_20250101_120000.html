@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Duplicate Assets Report - 01-01-2025 12:00:00</title>
+    <title>Duplicate Assets Report - 20250101_120000</title>
     <style>
         * {
             margin: 0;
@@ -123,6 +123,7 @@
             width: 100%;
             border-collapse: collapse;
             background: white;
+            table-layout: fixed;
         }
 
         thead {
@@ -174,6 +175,9 @@
             padding: 12px 15px;
             border-bottom: 1px solid #f0f0f0;
             font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         tr.group-0 {
@@ -261,7 +265,7 @@
         <div class="header">
             <h1>Duplicate Assets Report</h1>
             <div class="metadata">
-                User: demo_user@example.com | Generated: 01-01-2025 12:00:00
+                User: sample.user | Generated: 01-01-2025 12:00:00
             </div>
         </div>
 
@@ -282,7 +286,7 @@
 
         <div class="controls">
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search by Asset ID, Address, DNS Name, Asset Name, or Source...">
+                <input type="text" id="searchInput" placeholder="Search by Asset ID, Address, DNS Name, Asset Name, Source, or Last Activity...">
             </div>
             <button class="btn" id="resetSortBtn">Reset Sort</button>
             <button class="btn" onclick="window.print()">Print Report</button>
@@ -297,6 +301,7 @@
                         <th data-column="2">DNS Name<div class="resizer"></div></th>
                         <th data-column="3">Asset Name<div class="resizer"></div></th>
                         <th data-column="4">Source<div class="resizer"></div></th>
+                        <th data-column="5">Last Activity<div class="resizer"></div></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -306,6 +311,7 @@
                         <td>server01.example.com</td>
                         <td>Production-WebServer</td>
                         <td>EC2</td>
+                        <td>28-12-2024 14:32:15</td>
                     </tr>
                     <tr class="group-0" data-original-index="1">
                         <td>12345789</td>
@@ -313,6 +319,7 @@
                         <td>server02.example.com</td>
                         <td>Production-WebServer</td>
                         <td>Agent</td>
+                        <td>30-12-2024 09:45:22</td>
                     </tr>
                     <tr class="group-1" data-original-index="2">
                         <td>23456789</td>
@@ -320,6 +327,7 @@
                         <td>db-primary.corp.local</td>
                         <td>Database-Server-01</td>
                         <td>Agent</td>
+                        <td>29-12-2024 16:20:08</td>
                     </tr>
                     <tr class="group-1" data-original-index="3">
                         <td>23456890</td>
@@ -327,6 +335,7 @@
                         <td>db-primary.corp.local</td>
                         <td>Database-Server-02</td>
                         <td>EC2</td>
+                        <td>27-12-2024 11:15:33</td>
                     </tr>
                     <tr class="group-0" data-original-index="4">
                         <td>34567890</td>
@@ -334,6 +343,7 @@
                         <td>app01.internal</td>
                         <td>Application-Server</td>
                         <td>Agent</td>
+                        <td>31-12-2024 08:05:47</td>
                     </tr>
                     <tr class="group-0" data-original-index="5">
                         <td>34567901</td>
@@ -341,6 +351,7 @@
                         <td>app02.internal</td>
                         <td>App-Server-Backup</td>
                         <td>Agent</td>
+                        <td>30-12-2024 22:18:55</td>
                     </tr>
                     <tr class="group-1" data-original-index="6">
                         <td>45678901</td>
@@ -348,6 +359,7 @@
                         <td>fileserver.domain.com</td>
                         <td>FileServer-Main</td>
                         <td>Agent</td>
+                        <td>29-12-2024 13:42:10</td>
                     </tr>
                     <tr class="group-1" data-original-index="7">
                         <td>45678912</td>
@@ -355,6 +367,7 @@
                         <td>fileserver-backup.domain.com</td>
                         <td>FileServer-Main</td>
                         <td>EC2</td>
+                        <td>26-12-2024 19:27:38</td>
                     </tr>
                     <tr class="group-0" data-original-index="8">
                         <td>56789012</td>
@@ -362,6 +375,7 @@
                         <td>web-prod-01.example.com</td>
                         <td>WebServer-Production</td>
                         <td>EC2</td>
+                        <td>01-01-2025 06:10:22</td>
                     </tr>
                     <tr class="group-0" data-original-index="9">
                         <td>56789123</td>
@@ -369,6 +383,7 @@
                         <td>web-prod-02.example.com</td>
                         <td>WebServer-Prod-Backup</td>
                         <td>Agent</td>
+                        <td>31-12-2024 18:55:14</td>
                     </tr>
                     <tr class="group-1" data-original-index="10">
                         <td>67890123</td>
@@ -376,6 +391,7 @@
                         <td>mail01.corp.local</td>
                         <td>Mail-Server</td>
                         <td>Agent</td>
+                        <td>30-12-2024 12:33:41</td>
                     </tr>
                     <tr class="group-1" data-original-index="11">
                         <td>67890234</td>
@@ -383,6 +399,7 @@
                         <td>mail02.corp.local</td>
                         <td>Mail-Server</td>
                         <td>EC2</td>
+                        <td>28-12-2024 21:48:09</td>
                     </tr>
                     <tr class="group-0" data-original-index="12">
                         <td>78901234</td>
@@ -390,6 +407,7 @@
                         <td>proxy.internal.net</td>
                         <td>Proxy-Gateway-01</td>
                         <td>Agent</td>
+                        <td>29-12-2024 07:22:56</td>
                     </tr>
                     <tr class="group-0" data-original-index="13">
                         <td>78901345</td>
@@ -397,6 +415,7 @@
                         <td>proxy.internal.net</td>
                         <td>Proxy-Gateway-02</td>
                         <td>Agent</td>
+                        <td>31-12-2024 15:11:03</td>
                     </tr>
                     <tr class="group-1" data-original-index="14">
                         <td>89012345</td>
@@ -404,6 +423,7 @@
                         <td>backup01.example.com</td>
                         <td>Backup-Server</td>
                         <td>EC2</td>
+                        <td>27-12-2024 10:05:28</td>
                     </tr>
                     <tr class="group-1" data-original-index="15">
                         <td>89012456</td>
@@ -411,6 +431,7 @@
                         <td>backup02.example.com</td>
                         <td>Backup-Server</td>
                         <td>Agent</td>
+                        <td>30-12-2024 20:37:45</td>
                     </tr>
                 </tbody>
             </table>
@@ -420,7 +441,7 @@
         </div>
 
         <div class="footer">
-            Report contains potential duplicate assets based on Asset Name, DNS Name, NetBIOS Name, MAC Address, and IPv4 Address
+            Report contains potential duplicate assets based on Asset Name, DNS Name, NetBIOS Name, MAC Address, and IPv4 Address (EASM assets excluded)
         </div>
     </div>
 
@@ -460,7 +481,7 @@
         });
 
         // Sort functionality
-        let sortDirections = [true, true, true, true, true];
+        let sortDirections = [true, true, true, true, true, true];
 
         function sortTable(columnIndex) {
             const rows = Array.from(tbody.querySelectorAll('tr'));
@@ -536,9 +557,9 @@
             if (currentResizer) {
                 hasMoved = true;
                 const width = startWidth + (e.pageX - startX);
-                if (width > 50) { // Minimum width
+                if (width > 50) { // Minimum width of 50px
                     currentTh.style.width = width + 'px';
-                    currentTh.style.minWidth = width + 'px';
+                    // Don't set minWidth - allows shrinking columns below content width
                 }
             }
         }
@@ -562,7 +583,7 @@
             originalRowOrder.forEach(row => tbody.appendChild(row));
 
             // Reset sort directions to initial state
-            sortDirections = [true, true, true, true, true];
+            sortDirections = [true, true, true, true, true, true];
         });
     </script>
 </body>
