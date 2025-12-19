@@ -81,6 +81,7 @@ python3 duplicate_finder-v1.7.py --platform US1 --username user@example.com --in
 ## Output
 
 ### **Excel Report** (`duplicate_assets_<PLATFORM>_<USERNAME>_YYYYMMDD_HHMMSS.xlsx`)
+- [View sample Excel report](sample_duplicate_assets_20250101_120000.xlsx)
 - Frozen headers
 - Color-coded duplicate groups (alternating blue/peach)
 - Columns: Asset ID, Address, DNS Name, Asset Name, Source, Last Activity
@@ -88,6 +89,7 @@ python3 duplicate_finder-v1.7.py --platform US1 --username user@example.com --in
 - Sanitized cell values (illegal character removal)
 
 ### **HTML Report** (`duplicate_assets_<PLATFORM>_<USERNAME>_YYYYMMDD_HHMMSS.html`)
+- [View sample HTML report](sample_duplicate_assets_20250101_120000.html)
 - Summary dashboard with metrics (total assets, duplicates, percentage)
 - Real-time search across all columns
 - Sortable columns (click headers to sort)
