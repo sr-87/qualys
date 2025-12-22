@@ -376,8 +376,8 @@ if INCLUDE_EASM_ASSETS:
     # Use all assets
     assets_to_check = all_assets
 else:
-    print("\nChecking for potential duplicates (ignoring EASM assets)...\n")
-    # Filter out EASM assets
+    print("\nChecking for potential duplicates (ignoring assets with EASM as the only source)...\n")
+    # Filter out assets where EASM is the only source
     assets_to_check = []
     for asset in all_assets:
         inventory_list = asset.get('inventoryListData')
@@ -389,8 +389,8 @@ else:
             inventory_items = inventory_list.get('inventory', [])
             # Handle cases where source might be None
             sources = [item.get('source', '').upper() for item in inventory_items if item and item.get('source')]
-            # Exclude if EASM is the only source or one of the sources
-            if 'EASM' not in sources:
+            # Exclude only if EASM is the sole source (not if it has other sources too)
+            if len(sources) == 0 or not (len(sources) == 1 and sources[0] == 'EASM'):
                 assets_to_check.append(asset)
 
 print(f"Total assets: {len(all_assets)}")
@@ -693,7 +693,7 @@ if csv_data:
             background: white;
             border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
+            overflow: visible;
         }}
 
         .header {{
@@ -785,12 +785,14 @@ if csv_data:
 
         .table-container {{
             padding: 30px;
-            overflow-x: auto;
+            overflow: visible;
         }}
 
         table {{
             width: 100%;
-            border-collapse: collapse;
+            min-width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
             background: white;
             table-layout: fixed;
         }}
@@ -798,9 +800,6 @@ if csv_data:
         thead {{
             background: #34495E;
             color: white;
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }}
 
         th {{
@@ -813,6 +812,17 @@ if csv_data:
             cursor: pointer;
             user-select: none;
             white-space: nowrap;
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #34495E;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border-bottom: 2px solid #2C3E50;
+        }}
+
+        /* Ensure sticky works in all browsers */
+        thead tr {{
             position: relative;
         }}
 
@@ -1000,7 +1010,15 @@ if csv_data:
         </div>
 
         <div class="footer">
-            Report contains potential duplicate assets based on Asset Name, DNS Name, NetBIOS Name, MAC Address, and IPv4 Address {'(EASM assets included)' if INCLUDE_EASM_ASSETS else '(EASM assets excluded)'}
+            Report contains potential duplicate assets based on Asset Name, DNS Name, NetBIOS Name, MAC Address, and IPv4 Address """
+
+    # Add EASM status message
+    if INCLUDE_EASM_ASSETS:
+        html_content += "(EASM assets included)"
+    else:
+        html_content += "(assets with EASM as the only source excluded)"
+
+    html_content += """
         </div>
     </div>
 
