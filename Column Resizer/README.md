@@ -27,7 +27,7 @@ Works on:
 
 ### Download Latest Version
 
-**[Download v1.2 (ZIP)](https://github.com/sr-87/qualys/blob/main/Column%20Resizer/chrome/qualys-column-resizer-v1.2.zip?raw=true)**
+**[Download v1.2 (ZIP)](https://raw.githubusercontent.com/sr-87/qualys/main/Column%20Resizer/chrome/qualys-column-resizer-v1.2.zip)**
 
 ### Installation Steps
 
