@@ -79,7 +79,7 @@ Works on all global Qualys platforms:
 
 ## Support
 
-If you encounter issues or have questions, please [open an Issue](../../issues).
+If you encounter issues or have questions, please [open an Issue](https://github.com/sr-87/qualys/issues).
 
 ---
 
