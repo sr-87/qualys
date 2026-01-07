@@ -11,7 +11,7 @@ A Chrome browser extension that adds draggable column resizers and visibility co
 - **Drag to Resize Columns** - Adjust column widths by dragging resize handles
 - **Show/Hide Columns** - Toggle column visibility via settings menu
 - **Persistent Settings** - Your preferences are saved automatically
-- **Global Support** - Works on all Qualys platforms worldwide
+- **Global Support** - Works on all Qualys public platforms
 
 ---
 
@@ -27,9 +27,7 @@ Works on:
 
 ### Download Latest Version
 
-**[Download v1.2 (ZIP)](../../releases/download/v1.2/qualys-column-resizer-v1.2.zip)**
-
-Or visit the [Releases page](../../releases) for all versions.
+**[Download v1.2 (ZIP)](chrome/qualys-column-resizer-v1.2.zip)**
 
 ### Installation Steps
 
