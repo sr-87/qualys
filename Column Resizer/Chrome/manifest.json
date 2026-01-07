@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Qualys Column Resizer",
+  "version": "1.2.0",
+  "description": "Adds draggable column resizers and visibility controls to Qualys VMDR and Asset Management tables.",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://*.qualys.com/*",
+    "https://*.qualys.in/*",
+    "https://*.qualys.eu/*",
+    "https://*.qualys.co.uk/*",
+    "https://*.qualys.ca/*",
+    "https://*.qualys.it/*",
+    "https://*.qualys.ae/*",
+    "https://*.qualys.com.au/*",
+    "https://*.qualysksa.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.qualys.com/*",
+        "https://*.qualys.in/*",
+        "https://*.qualys.eu/*",
+        "https://*.qualys.co.uk/*",
+        "https://*.qualys.ca/*",
+        "https://*.qualys.it/*",
+        "https://*.qualys.ae/*",
+        "https://*.qualys.com.au/*",
+        "https://*.qualysksa.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

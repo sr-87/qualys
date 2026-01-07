@@ -1,0 +1,97 @@
+.qualys-resizer {
+  position: absolute !important;
+  top: 0 !important;
+  right: -5px !important;
+  width: 11px !important;
+  height: 100% !important;
+  cursor: col-resize !important;
+  user-select: none !important;
+  z-index: 1 !important;
+  padding: 0 5px !important;
+  background: transparent !important;
+  background-clip: content-box !important;
+  transition: background-color 0.15s ease;
+}
+
+.qualys-resizer::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 5px !important;
+  top: 0 !important;
+  width: 1px !important;
+  height: 100% !important;
+  background: rgba(0, 0, 0, 0.12) !important;
+  transition: background-color 0.15s ease;
+}
+
+.qualys-resizer:hover::before {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Hide the checkbox column resizer by default, show on hover */
+.qualys-resizer-hidden::before {
+  background: transparent !important;
+}
+.qualys-resizer-hidden:hover::before {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Fix date column truncation - remove ellipsis from date cells */
+[class*="vuln-date-style"] {
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* Fix asset column truncation - remove ellipsis from asset cells */
+[class*="asset-column-style"],
+[class*="asset-name"],
+.primary-cell-text-link,
+.cell-sub-text {
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+/* Fix table cell truncation globally */
+.rt-td [class*="cell"] {
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* Enable horizontal scrolling */
+.ReactTable {
+  overflow-x: auto !important;
+}
+
+.rt-table {
+  min-width: 100% !important;
+  width: fit-content !important;
+}
+
+/* Make checkbox column narrower - only target the header with checkboxHeader class */
+.rt-th.checkboxHeader {
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  flex: 0 0 40px !important;
+}
+
+/* Column visibility menu styles */
+[data-qcr-columns="true"] .list-item_item-text-icon-both_BvSwr {
+  flex: 1 !important;
+}
+
+.qcr-columns-items {
+  overflow-y: auto !important;
+}
+
+.qcr-column-item {
+  background-color: transparent !important;
+}
+
+.qcr-column-item:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
