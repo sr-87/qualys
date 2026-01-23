@@ -1,6 +1,6 @@
 # Qualys Column Resizer
 
-A Chrome browser extension that adds draggable column resizers and visibility controls to Qualys VMDR and GAV/CSAM tables.
+A Chrome and Edge browser extension that adds draggable column resizers and visibility controls to Qualys VMDR and GAV/CSAM tables.
 
 ![Demo](qualys-column-resizer.gif)
 
@@ -29,11 +29,18 @@ Works on:
 
 **[Download v1.2 (ZIP)](https://raw.githubusercontent.com/sr-87/qualys/main/Column%20Resizer/Chrome/qualys-column-resizer-v1.2.zip)**
 
-### Installation Steps
+### Installation Steps for Chrome
 
 1. **Download** the ZIP file and extract it
 2. Open Chrome and go to `chrome://extensions/`
 3. Enable **"Developer mode"** (toggle in top-right)
+4. Click **"Load unpacked"**
+5. Select the extracted `qualys-column-resizer-v1.2` folder
+
+### Installation Steps for Edge
+1. **Download** the ZIP file and extract it
+2. Open Edge and go to `edge://extensions/`
+3. Enable **"Developer mode"** (toggle in left-hand panel)
 4. Click **"Load unpacked"**
 5. Select the extracted `qualys-column-resizer-v1.2` folder
 
