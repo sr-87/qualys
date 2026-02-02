@@ -12,6 +12,14 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 from datetime import datetime
 
+# Constants
+API_TIMEOUT_LONG = 60  # Timeout for authentication and tag requests (seconds)
+API_TIMEOUT_SHORT = 30  # Timeout for asset count and logout requests (seconds)
+TAG_PAGE_SIZE = 100  # Number of tags to fetch per page
+AUTOSAVE_INTERVAL = 10  # Save progress after every N tags
+PROGRESS_STALE_HOURS = 24  # Progress older than this is considered stale
+RATE_LIMIT_INFO = "300 calls/hour"  # Qualys API rate limit description
+
 # Global flag for graceful shutdown
 interrupted = False
 
@@ -56,6 +64,38 @@ def delete_progress(platform, username):
     progress_file = get_progress_filename(platform, username)
     if os.path.exists(progress_file):
         os.remove(progress_file)
+
+def handle_rate_limit(endpoint_name, report_data=None, platform=None, username=None):
+    """
+    Handle API rate limit by displaying message and exiting gracefully.
+
+    Args:
+        endpoint_name: Name of the endpoint that hit the rate limit
+        report_data: Optional progress data to save before exiting
+        platform: Platform for progress file (required if report_data provided)
+        username: Username for progress file (required if report_data provided)
+    """
+    print("\n\n" + "="*70)
+    print(f"RATE LIMIT REACHED ({endpoint_name})")
+    print("="*70)
+    print(f"Qualys API rate limit has been reached ({RATE_LIMIT_INFO}).")
+
+    if report_data is not None:
+        save_progress(report_data, platform, username)
+        print("\nTo resume:")
+        print("1. Wait for the rate limit window to reset (typically 1 hour)")
+        print("2. Run this script again")
+        print("3. Choose 'yes' when asked to resume from saved progress")
+        exit_code = 0  # Graceful exit with saved progress
+    else:
+        print("\nThe script cannot continue at this time.")
+        print("\nTo retry:")
+        print("1. Wait for the rate limit window to reset (typically 1 hour)")
+        print("2. Run this script again")
+        exit_code = 1  # Error exit, no progress to save
+
+    print("="*70)
+    sys.exit(exit_code)
 
 def signal_handler(_sig, _frame):
     """Handle Ctrl+C gracefully"""
@@ -132,17 +172,17 @@ existing_progress = load_progress(platform, username)
 resume_from_progress = False
 
 if existing_progress:
-    # Check if progress is older than 24 hours
+    # Check if progress is stale
     try:
         progress_timestamp = datetime.fromisoformat(existing_progress.get('timestamp'))
         age_hours = (datetime.now() - progress_timestamp).total_seconds() / 3600
 
-        if age_hours > 24:
+        if age_hours > PROGRESS_STALE_HOURS:
             print("\n" + "="*70)
             print("STALE PROGRESS DETECTED")
             print("="*70)
             print(f"Progress file is {age_hours:.1f} hours old (saved: {existing_progress.get('timestamp')})")
-            print("Progress older than 24 hours is considered stale and will be discarded.")
+            print(f"Progress older than {PROGRESS_STALE_HOURS} hours is considered stale and will be discarded.")
             print("Starting fresh session...")
             print("="*70)
             delete_progress(platform, username)
@@ -194,9 +234,9 @@ auth_data = {
 
 # Perform authentication to get JWT
 try:
-    auth_response = requests.post(auth_url, headers=auth_headers, data=auth_data, timeout=60)
+    auth_response = requests.post(auth_url, headers=auth_headers, data=auth_data, timeout=API_TIMEOUT_LONG)
 except requests.exceptions.Timeout:
-    print("ERROR: Authentication request timed out after 60 seconds.")
+    print(f"ERROR: Authentication request timed out after {API_TIMEOUT_LONG} seconds.")
     print("Please check your network connection and try again.")
     exit(1)
 except requests.exceptions.RequestException as e:
@@ -229,7 +269,7 @@ print("\nFetching tags...")
 
 all_tags = []
 page_number = 0
-page_size = 100  # Default page size for tags
+page_size = TAG_PAGE_SIZE
 
 while True:
     # Prepare the request body as XML with pagination preferences
@@ -249,10 +289,10 @@ while True:
             headers=tag_headers,
             data=request_body,
             auth=HTTPBasicAuth(username, password),
-            timeout=60
+            timeout=API_TIMEOUT_LONG
         )
     except requests.exceptions.Timeout:
-        print("ERROR: Tag fetch request timed out after 60 seconds.")
+        print(f"ERROR: Tag fetch request timed out after {API_TIMEOUT_LONG} seconds.")
         print("Please check your network connection and try again.")
         sys.exit(1)
     except requests.exceptions.RequestException as e:
@@ -261,16 +301,7 @@ while True:
 
     # Check for rate limiting (HTTP 429)
     if tag_response.status_code == 429:
-        print("\n" + "="*70)
-        print("RATE LIMIT REACHED (Tag List Endpoint)")
-        print("="*70)
-        print("Qualys API rate limit has been reached (300 calls/hour).")
-        print("\nThe script cannot continue at this time.")
-        print("\nTo retry:")
-        print("1. Wait for the rate limit window to reset (typically 1 hour)")
-        print("2. Run this script again")
-        print("="*70)
-        sys.exit(1)
+        handle_rate_limit("Tag List Endpoint")
 
     if tag_response.status_code != 200:
         print(f"\nFailed to fetch tags (HTTP {tag_response.status_code}).")
@@ -283,7 +314,7 @@ while True:
             try:
                 error_root = ET.fromstring(tag_response.text)
                 print(f"Parsed XML error: {ET.tostring(error_root, encoding='unicode')}")
-            except:
+            except ET.ParseError:
                 pass
         sys.exit(1)
 
@@ -330,6 +361,81 @@ while True:
 print(f"\nTotal tags found: {len(all_tags)}")
 
 # ============================================================================
+# Helper function to parse and format tag set rule text
+# ============================================================================
+def parse_tagset_rule(rule_text_xml, tag_id_map):
+    """
+    Parse tag set XML and return human-readable formatted text.
+
+    Args:
+        rule_text_xml: The decoded XML string containing TAG_SET_TAG structure
+        tag_id_map: Dictionary mapping tag IDs to tag names
+
+    Returns:
+        Formatted multi-line string describing the tag set
+    """
+    try:
+
+        # Parse the tag set XML
+        tagset_root = ET.fromstring(rule_text_xml)
+
+        # Extract INCLUDE section
+        include_section = tagset_root.find('.//INCLUDE_TAG')
+        include_scope = include_section.findtext('SCOPE', 'ANY') if include_section is not None else 'ANY'
+        include_tags = []
+
+        if include_section is not None:
+            tag_list = include_section.find('TAG_LIST')
+            if tag_list is not None:
+                for tag_elem in tag_list.findall('Tag'):
+                    parent_id = tag_elem.findtext('PARENT', '')
+                    if parent_id:
+                        # Only include tags that exist in the map (skip deleted/unavailable tags)
+                        if parent_id in tag_id_map:
+                            tag_name = tag_id_map[parent_id]
+                            include_tags.append(tag_name)
+
+        # Extract EXCLUDE section
+        exclude_section = tagset_root.find('.//EXCLUDE_TAG')
+        exclude_scope = exclude_section.findtext('SCOPE', 'ANY') if exclude_section is not None else 'ANY'
+        exclude_tags = []
+
+        if exclude_section is not None:
+            tag_list = exclude_section.find('TAG_LIST')
+            if tag_list is not None:
+                for tag_elem in tag_list.findall('Tag'):
+                    parent_id = tag_elem.findtext('PARENT', '')
+                    if parent_id:
+                        # Only include tags that exist in the map (skip deleted/unavailable tags)
+                        if parent_id in tag_id_map:
+                            tag_name = tag_id_map[parent_id]
+                            exclude_tags.append(tag_name)
+
+        # Format the output
+        lines = []
+        lines.append(f"INCLUDE ({include_scope}):")
+        if include_tags:
+            for tag_name in include_tags:
+                lines.append(f"  - {tag_name}")
+        else:
+            lines.append("  (none)")
+
+        lines.append("")
+        lines.append(f"EXCLUDE ({exclude_scope}):")
+        if exclude_tags:
+            for tag_name in exclude_tags:
+                lines.append(f"  - {tag_name}")
+        else:
+            lines.append("  (none)")
+
+        return '\n'.join(lines)
+
+    except ET.ParseError as e:
+        return f"Error parsing tag set XML: {e}"
+    except Exception as e:
+        return f"Error formatting tag set: {e}"
+
+# ============================================================================
 # Fetch detailed information for ALL tags using GET endpoint
 # ============================================================================
 
@@ -338,14 +444,31 @@ if all_tags:
     print(f"Generating detailed report ({len(all_tags)} tags)")
     print("="*80)
 
+    # Build comprehensive tag ID to name mapping (will be updated as we process tags)
+    tag_id_to_name_map = {tag.get('id'): tag.get('name', 'Unknown') for tag in all_tags}
+
     # Collect data for reports
     if resume_from_progress:
         report_data = existing_progress.get('processed_tags', [])
         processed_tag_ids = {item['Tag ID'] for item in report_data}
         print(f"\nResuming from {len(report_data)} previously processed tags...")
+
+        # Re-process any unresolved tag sets from previous session
+        unresolved_tagsets = [
+            item for item in report_data
+            if item.get('Rule Text') == '[TAGSET_PLACEHOLDER]'
+        ]
+        if unresolved_tagsets:
+            print(f"Found {len(unresolved_tagsets)} unresolved tag set(s) - will re-fetch")
+            for item in unresolved_tagsets:
+                processed_tag_ids.discard(item['Tag ID'])
+                report_data.remove(item)
     else:
         report_data = []
         processed_tag_ids = set()
+
+    # Store tag sets for second pass processing (after all tag IDs are in the map)
+    tagset_data = []
 
     print("\nPress Ctrl+C to pause and resume later\n")
 
@@ -375,22 +498,12 @@ if all_tags:
             detail_response = requests.get(
                 tag_detail_url,
                 auth=HTTPBasicAuth(username, password),
-                timeout=60
+                timeout=API_TIMEOUT_LONG
             )
 
             # Check for rate limiting (HTTP 429)
             if detail_response.status_code == 429:
-                print("\n\n" + "="*70)
-                print("RATE LIMIT REACHED (Tag Detail Endpoint)")
-                print("="*70)
-                print("Qualys API rate limit has been reached (300 calls/hour).")
-                save_progress(report_data, platform, username)
-                print("\nTo resume:")
-                print("1. Wait for the rate limit window to reset (typically 1 hour)")
-                print("2. Run this script again")
-                print("3. Choose 'yes' when asked to resume from saved progress")
-                print("="*70)
-                sys.exit(0)
+                handle_rate_limit("Tag Detail Endpoint", report_data, platform, username)
 
             if detail_response.status_code != 200:
                 print(f"  ERROR: Failed to fetch details (HTTP {detail_response.status_code})")
@@ -412,6 +525,9 @@ if all_tags:
                     # Decode HTML entities like &lt; and &gt;
                     tag_name = html.unescape(tag_name)
 
+                # Update tag map with this tag's info (in case it wasn't in the initial list)
+                tag_id_to_name_map[tag_id] = tag_name
+
                 # Get parent tag name
                 parent_tag_id = tag_element.findtext('parentTagId', '')
                 if parent_tag_id:
@@ -431,14 +547,19 @@ if all_tags:
                 else:
                     child_count = 0
 
-                # Determine tag type (static vs dynamic)
+                # Determine tag type (static vs dynamic vs tagset)
                 rule_type = tag_element.findtext('ruleType', '')
+                rule_text_raw = tag_element.findtext('ruleText', '')
+
+                # Check if it's a tagset (has ruleText with TAG_SET_TAG but no ruleType)
+                is_tagset = (not rule_type) and rule_text_raw and 'TAG_SET_TAG' in rule_text_raw
+
                 if rule_type:
                     tag_type = 'Dynamic'
                     rule_type_display = rule_type
 
                     # Extract rule text and decode HTML entities
-                    rule_text = tag_element.findtext('ruleText', 'N/A')
+                    rule_text = rule_text_raw if rule_text_raw else 'N/A'
                     if rule_text != 'N/A':
                         # Decode HTML entities like &lt; and &gt;
                         rule_text = html.unescape(rule_text)
@@ -451,6 +572,15 @@ if all_tags:
                         rule_text = rule_text.replace('\n', ' ').replace('\r', '')[:47] + '...'
                     else:
                         rule_text = 'N/A'
+                elif is_tagset:
+                    tag_type = 'Tag Set'
+                    rule_type_display = 'TAG_SET'
+                    # Decode and clean the rule text
+                    rule_text_decoded = html.unescape(rule_text_raw)
+                    # Remove XML declaration if present
+                    rule_text_decoded = rule_text_decoded.replace('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>', '').strip()
+                    # Store for second pass processing (will be resolved after all tags are in the map)
+                    rule_text = '[Tag Set - will be resolved after all tags processed]'
                 else:
                     tag_type = 'Static'
                     rule_type_display = 'N/A'
@@ -502,7 +632,7 @@ if all_tags:
                         count_url,
                         headers=count_headers,
                         json=count_body,
-                        timeout=30
+                        timeout=API_TIMEOUT_SHORT
                     )
 
                     if count_response.status_code == 200:
@@ -510,17 +640,7 @@ if all_tags:
                         asset_count = count_data.get('count', 'N/A')
                     elif count_response.status_code == 429:
                         # Rate limit hit - save progress and exit
-                        print("\n\n" + "="*70)
-                        print("RATE LIMIT REACHED (Asset Count Endpoint)")
-                        print("="*70)
-                        print("Qualys API rate limit has been reached (300 calls/hour).")
-                        save_progress(report_data, platform, username)
-                        print("\nTo resume:")
-                        print("1. Wait for the rate limit window to reset (typically 1 hour)")
-                        print("2. Run this script again")
-                        print("3. Choose 'yes' when asked to resume from saved progress")
-                        print("="*70)
-                        sys.exit(0)
+                        handle_rate_limit("Asset Count Endpoint", report_data, platform, username)
                     else:
                         asset_count = 'N/A'
                 except (requests.exceptions.RequestException, json.JSONDecodeError, KeyError):
@@ -532,12 +652,21 @@ if all_tags:
                     rule_text_full = tag_element.findtext('ruleText', 'N/A')
                     if rule_text_full != 'N/A':
                         rule_text_full = html.unescape(rule_text_full)
-                        # For ASSET_SEARCH and NETWORK_RANGE_ENHANCED, remove XML declaration
+                        # For ASSET_SEARCH, NETWORK_RANGE_ENHANCED, remove XML declaration
                         if rule_type in ['ASSET_SEARCH', 'NETWORK_RANGE_ENHANCED']:
                             rule_text_full = rule_text_full.replace('<?xml version="1.0" encoding="UTF-8"?>', '').strip()
                         # Keep newlines for proper formatting in reports
                     else:
                         rule_text_full = 'N/A'
+                elif is_tagset:
+                    # For tag sets, store the decoded XML for second pass processing
+                    # Add placeholder that will be replaced in second pass
+                    rule_text_full = '[TAGSET_PLACEHOLDER]'
+                    # Store tag set data for second pass
+                    tagset_data.append({
+                        'report_index': len(report_data),  # Index in report_data where this tag set will be
+                        'rule_text_decoded': rule_text_decoded
+                    })
                 else:
                     rule_text_full = 'N/A'
 
@@ -559,8 +688,8 @@ if all_tags:
                 # Mark as processed
                 processed_tag_ids.add(tag_id)
 
-                # Auto-save progress every 10 tags
-                if len(report_data) % 10 == 0:
+                # Auto-save progress periodically
+                if len(report_data) % AUTOSAVE_INTERVAL == 0:
                     save_progress(report_data, platform, username, silent=True)
 
             except ET.ParseError as e:
@@ -582,6 +711,21 @@ if all_tags:
         save_progress(report_data, platform, username)
         print("\n\nScript paused. Run again and choose 'yes' to resume.")
         sys.exit(0)
+
+    # Second pass: Process all tag sets now that all tag IDs are in the map
+    if tagset_data:
+        print(f"\n\nSecond pass: Resolving {len(tagset_data)} tag sets with complete tag map...")
+        for tagset_info in tagset_data:
+            report_index = tagset_info['report_index']
+            rule_text_decoded = tagset_info['rule_text_decoded']
+
+            # Parse the tag set with the now-complete tag ID map
+            parsed_rule_text = parse_tagset_rule(rule_text_decoded, tag_id_to_name_map)
+
+            # Update the report data with the resolved tag set text
+            report_data[report_index]['Rule Text'] = parsed_rule_text
+
+        print(f"Tag set resolution complete!")
 
     print("\n\n" + "="*80)
     print(f"Processing complete! {len(report_data)} tags processed.")
@@ -924,7 +1068,7 @@ if all_tags:
         th:nth-child(9), td:nth-child(9) {{ width: 9%; }}   /* Created */
         th:nth-child(10), td:nth-child(10) {{ width: 9%; }} /* Modified */
 
-        tbody tr:nth-child(even) {{
+        tbody tr.even-row {{
             background-color: #f8f9fa;
         }}
 
@@ -1107,6 +1251,9 @@ if all_tags:
                 <div class="filter-menu" id="filterMenu">
                     <div class="filter-section">
                         <label><input type="checkbox" class="tag-type-filter" data-type="Static" checked> Static Tags</label>
+                    </div>
+                    <div class="filter-section">
+                        <label><input type="checkbox" class="tag-type-filter" data-type="Tag Set" checked> Tag Sets</label>
                     </div>
                     <div class="filter-section">
                         <div class="filter-section-title">Dynamic Tags</div>
@@ -1345,6 +1492,9 @@ if all_tags:
                 }
                 hideDescendants(tagName);
             }
+
+            // Update row colors after toggling
+            updateRowColors();
         }
 
         // Add click handlers to hierarchy icons
@@ -1399,6 +1549,29 @@ if all_tags:
             }
         }
         initializeHierarchy();
+
+        // Apply alternating row colors to visible rows only
+        function updateRowColors() {
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            let visibleIndex = 0;
+
+            rows.forEach(row => {
+                // Only count visible rows
+                if (row.style.display !== 'none') {
+                    if (visibleIndex % 2 === 1) {
+                        row.classList.add('even-row');
+                    } else {
+                        row.classList.remove('even-row');
+                    }
+                    visibleIndex++;
+                } else {
+                    row.classList.remove('even-row');
+                }
+            });
+        }
+
+        // Apply initial row colors
+        updateRowColors();
 
         searchInput.addEventListener('keyup', function() {
             const filter = this.value.toLowerCase();
@@ -1461,6 +1634,9 @@ if all_tags:
                 table.style.display = 'table';
                 noResults.style.display = 'none';
             }
+
+            // Update row colors after search
+            updateRowColors();
         });
 
         let sortDirections = [true, true, true, true, true, true, true, true, true, true];
@@ -1653,6 +1829,8 @@ if all_tags:
                 // Check if row matches selected filters
                 if (tagType === 'Static' && selectedTagTypes.has('Static')) {
                     shouldShow = true;
+                } else if (tagType === 'Tag Set' && selectedTagTypes.has('Tag Set')) {
+                    shouldShow = true;
                 } else if (tagType === 'Dynamic') {
                     // For dynamic tags, check if their rule type is selected
                     if (selectedRuleTypes.has(ruleType)) {
@@ -1682,6 +1860,9 @@ if all_tags:
                 table.style.display = 'table';
                 noResults.style.display = 'none';
             }
+
+            // Update row colors after filtering
+            updateRowColors();
         }
 
         // Handle tag type filter changes
@@ -1790,7 +1971,7 @@ logout_data = {
     "token": "false"
 }
 try:
-    logout_response = requests.post(auth_url, headers=auth_headers, data=logout_data, timeout=30)
+    logout_response = requests.post(auth_url, headers=auth_headers, data=logout_data, timeout=API_TIMEOUT_SHORT)
     if logout_response.status_code == 200 or logout_response.status_code == 201:
         print("\nLogout successful.")
     else:
